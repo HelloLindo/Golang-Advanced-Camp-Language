@@ -1,7 +1,7 @@
 package demo_and_test
 
 import (
-"sync"
+	"sync"
 )
 
 type IntList struct {

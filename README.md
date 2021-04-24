@@ -1,2 +1,2 @@
-# Ordered Linked List with Concurrent Safe  
+# Sorted Linked List with Concurrent Safe  
 
