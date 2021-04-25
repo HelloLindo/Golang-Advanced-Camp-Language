@@ -31,8 +31,7 @@ Insert a new Node x into the list.
 */
 func (l *IntList) Insert(value int) bool {
 	a := l.head
-	bP := unsafe.Pointer(&a.next)
-	b := (*Node)(atomic.LoadPointer((*unsafe.Pointer)(bP)))
+	b := (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&a.next))))
 	for {
 		// Step 1. Find the positions of a and b.
 		for b != nil && b.value < value {
@@ -50,8 +49,7 @@ func (l *IntList) Insert(value int) bool {
 			// Node a was changed.
 			a.mu.Unlock()
 			a = l.head
-			bP = unsafe.Pointer(&a.next)
-			b = (*Node)(atomic.LoadPointer((*unsafe.Pointer)(bP)))
+			b = (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&a.next))))
 			continue
 		}
 		break
@@ -74,8 +72,7 @@ Delete the Node with specific value from the list.
 */
 func (l *IntList) Delete(value int) bool {
 	a := l.head
-	bP := unsafe.Pointer(&a.next)
-	b := (*Node)(atomic.LoadPointer((*unsafe.Pointer)(bP)))
+	b := (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&a.next))))
 	for {
 		// Step 1. Find the positions of a and b.
 		for b != nil && b.value < value {
@@ -91,8 +88,7 @@ func (l *IntList) Delete(value int) bool {
 		if b.marked == uint32(1) {
 			b.mu.Unlock()
 			a = l.head
-			bP = unsafe.Pointer(&a.next)
-			b = (*Node)(atomic.LoadPointer((*unsafe.Pointer)(bP)))
+			b = (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&a.next))))
 			continue
 		}
 		// Step 3. Check if a is edited or available.
@@ -101,8 +97,7 @@ func (l *IntList) Delete(value int) bool {
 			a.mu.Unlock()
 			b.mu.Unlock()
 			a = l.head
-			bP = unsafe.Pointer(&a.next)
-			b = (*Node)(atomic.LoadPointer((*unsafe.Pointer)(bP)))
+			b = (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&a.next))))
 			continue
 		}
 		break
@@ -124,8 +119,7 @@ Return true if the list contains a node with specific value.
 */
 func (l *IntList) Contains(value int) bool {
 	a := l.head
-	xP := unsafe.Pointer(a.next)
-	x := (*Node)(atomic.LoadPointer(&xP))
+	x := (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&a.next))))
 	// Find the node with that value.
 	for x != nil && x.value < value {
 		a = x
@@ -135,23 +129,25 @@ func (l *IntList) Contains(value int) bool {
 		return false
 	}
 	// Check if the value is valid.
-	return x.value == value && x.marked == uint32(0)
+	return x.value == value && atomic.LoadUint32(&x.marked) == uint32(0)
 }
 
 /**
 Apply function f to all nodes in the list.
 */
 func (l *IntList) Range(f func(value int) bool) {
-	//headP := unsafe.Pointer(l.head)
-	//a := (*Node)(atomic.LoadPointer(&headP))
-	a := l.head
-	xP := unsafe.Pointer(a.next)
-	x := (*Node)(atomic.LoadPointer(&xP))
+	x := (*Node)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&l.head.next))))
 	for x != nil {
+
+		if atomic.LoadUint32(&x.marked) == uint32(1) {
+			atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&x)), atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&x.next))))
+			continue
+		}
+
 		if !f(x.value) {
 			break
 		}
-		atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&x)), unsafe.Pointer(x.next))
+		atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&x)), atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&x.next))))
 	}
 }
 
