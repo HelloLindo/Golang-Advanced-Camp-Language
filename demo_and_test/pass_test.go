@@ -1,12 +1,12 @@
 package demo_and_test
 
 import (
-"fmt"
-"sync"
-"sync/atomic"
-"testing"
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"testing"
 
-_ "unsafe" // for linkname
+	_ "unsafe" // for linkname
 )
 
 //go:linkname fastrand runtime.fastrand

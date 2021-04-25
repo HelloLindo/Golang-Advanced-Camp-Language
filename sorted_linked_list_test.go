@@ -247,7 +247,7 @@ func TestIntSet(t *testing.T) {
 	}
 }
 
-func printList(l *IntList, t *testing.T)  {
+func printList(l *IntList, t *testing.T) {
 	l.Range(func(value int) bool {
 		t.Log(value)
 		return true
